@@ -1,0 +1,64 @@
+import heapq
+from collections import defaultdict
+
+class Node:
+    def __init__(self, char, freq):
+        self.char = char
+        self.freq = freq
+        self.left = None
+        self.right = None
+
+    def __lt__(self, other):
+        return self.freq < other.freq
+
+def build_huffman_tree(frequencies):
+    # Create a priority queue (min-heap) of nodes
+    heap = [Node(char, freq) for char, freq in frequencies.items()]
+    heapq.heapify(heap)
+
+    while len(heap) > 1:
+        # Remove the two nodes with the smallest frequencies
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+
+        # Create a new internal node with these two nodes as children
+        merged = Node(None, left.freq + right.freq)
+        merged.left = left
+        merged.right = right
+
+        # Add the new node back into the heap
+        heapq.heappush(heap, merged)
+
+    # The last node in the heap is the root of the Huffman tree
+    return heap[0]
+
+def generate_codes(node, prefix='', codebook=None):
+    if codebook is None:
+        codebook = defaultdict(str)
+    
+    if node is not None:
+        if node.char is not None:
+            # It's a leaf node; assign the current prefix as its code
+            codebook[node.char] = prefix
+        generate_codes(node.left, prefix + '0', codebook)
+        generate_codes(node.right, prefix + '1', codebook)
+    
+    return codebook
+
+def huffman_coding(frequencies):
+    # Build the Huffman tree
+    root = build_huffman_tree(frequencies)
+    # Generate the codes from the tree
+    return generate_codes(root)
+
+if __name__ == "__main__":
+    # Define character frequencies
+    frequencies = {'a': 45, 'b': 13, 'c': 12, 'd': 16, 'e': 9, 'f': 5}
+
+    # Generate Huffman codes
+    codes = huffman_coding(frequencies)
+
+    # Print the result
+    print("Character Huffman Codes:")
+    for char, code in sorted(codes.items()):
+        print(f"{char}: {code}")

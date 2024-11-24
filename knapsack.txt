@@ -1,0 +1,103 @@
+from queue import Queue
+import copy
+
+# Item class to hold weight and value of each item
+class Item:
+    def __init__(self, weight, value):
+        self.weight = weight
+        self.value = value
+
+# Node class representing each node in the decision tree
+class Node:
+    def __init__(self, level, profit, bound, weight):
+        self.level = level  # Level of node in decision tree (index of the item)
+        self.profit = profit  # Profit accumulated so far
+        self.bound = bound  # Upper bound of possible profit
+        self.weight = weight  # Weight accumulated so far
+
+# Function to compare two items based on their value-to-weight ratio
+def compare(a, b):
+    r1 = float(a.value) / a.weight
+    r2 = float(b.value) / b.weight
+    return r1 > r2
+
+# Function to calculate the upper bound of profit for a given node
+def bound(u, n, W, arr):
+    # If the weight exceeds the knapsack capacity, return 0
+    if u.weight >= W:
+        return 0
+    # Start with the profit accumulated so far
+    profitBound = u.profit
+    j = u.level + 1
+    totWeight = int(u.weight)
+    
+    # Add items as long as they don't exceed the knapsack capacity
+    while j < n and totWeight + int(arr[j].weight) <= W:
+        totWeight += int(arr[j].weight)
+        profitBound += arr[j].value
+        j += 1
+    
+    # If there are still items that can be fractionally added, add their value proportionally
+    if j < n:
+        profitBound += int((W - totWeight) * arr[j].value / arr[j].weight)
+    
+    return profitBound
+
+# Function to find the maximum profit using Branch and Bound
+def knapsack_solution(W, arr, n):
+    # Sort the items by value-to-weight ratio in descending order
+    arr.sort(key=lambda x: float(x.value) / x.weight, reverse=True)
+    
+    # Initialize the priority queue (using Queue)
+    q = Queue()
+    
+    # Create the root node of the decision tree
+    u = Node(-1, 0, 0, 0)
+    q.put(u)
+    
+    maxProfit = 0
+    
+    # Explore the tree using the queue
+    while not q.empty():
+        u = q.get()
+        
+        # If we have processed all items, continue
+        if u.level == n - 1:
+            continue
+        
+        # Generate the child node for including the next item in the knapsack
+        v = Node(u.level + 1, u.profit + arr[u.level + 1].value, 0, u.weight + arr[u.level + 1].weight)
+        
+        # If this item can be added without exceeding the capacity and the profit is greater than maxProfit
+        if v.weight <= W and v.profit > maxProfit:
+            maxProfit = v.profit
+        
+        # Calculate the upper bound for this node
+        v.bound = bound(v, n, W, arr)
+        
+        # If the upper bound is greater than the current maximum profit, add the node to the queue
+        if v.bound > maxProfit:
+            q.put(v)
+        
+        # Generate the child node for excluding the next item in the knapsack
+        v = Node(u.level + 1, u.profit, 0, u.weight)
+        v.bound = bound(v, n, W, arr)
+        
+        # If the upper bound is greater than the current maximum profit, add the node to the queue
+        if v.bound > maxProfit:
+            q.put(v)
+    
+    return maxProfit
+
+# Driver code to run the algorithm
+if __name__ == '__main__':
+    W = 10  # Knapsack capacity
+    # List of items with their weights and values
+    arr = [Item(2, 40), Item(3.14, 50), Item(1.98, 100), Item(5, 95), Item(3, 30)]
+    
+    # Number of items
+    n = len(arr)
+    
+    # Calculate and print the maximum profit
+    print('Maximum possible profit =', knapsack_solution(W, arr, n))
+O(n⋅2^n)-n for bounding function and 2^n for exploring subsets of nodes.

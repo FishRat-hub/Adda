@@ -1,0 +1,61 @@
+class Graph:
+    def __init__(self, vertices):
+        self.V = vertices  # Number of vertices
+        self.graph = [[] for _ in range(vertices)]  # Adjacency list representation of graph
+
+    def add_edge(self, u, v):
+        self.graph[u].append(v)
+        self.graph[v].append(u)
+
+    def greedy_coloring(self):
+        # Initialize all vertices with no color assigned
+        result = [-1] * self.V
+        
+        # Assign the first color to the first vertex
+        result[0] = 0
+        
+        # A temporary array to store the available colors. False means the color is available.
+        available = [False] * self.V
+        
+        # Assign colors to the remaining vertices
+        for u in range(1, self.V):
+            # Process all the adjacent vertices and mark their colors as unavailable
+            for neighbor in self.graph[u]:
+                if result[neighbor] != -1:
+                    available[result[neighbor]] = True
+            
+            # Find the first available color
+            color = 0
+            while color < self.V:
+                if not available[color]:
+                    break
+                color += 1
+            
+            # Assign the found color
+            result[u] = color
+            
+            # Reset the available colors for the next vertex
+            available = [False] * self.V
+        
+        return result
+
+# Driver code
+if __name__ == "__main__":
+    # Create a graph with 5 radio stations (vertices)
+    g = Graph(5)
+    
+    # Add edges representing interference between radio stations
+    g.add_edge(0, 1)
+    g.add_edge(0, 2)
+    g.add_edge(1, 2)
+    g.add_edge(1, 3)
+    g.add_edge(3, 4)
+    
+    # Get the result from the greedy coloring algorithm
+    coloring = g.greedy_coloring()
+    
+    # Print the assigned frequencies (colors)
+    print("Assigned Frequencies (Colors):")
+    for station, freq in enumerate(coloring):
+        print(f"Station {station} -> Frequency {freq}")
+O(V+E)
